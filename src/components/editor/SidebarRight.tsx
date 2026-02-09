@@ -1,9 +1,8 @@
 import React from 'react';
-import { useStore } from '../../store/useStore';
+import { useStore, GOOGLE_FONTS } from '../../store/useStore';
 import {
     Trash2,
     Sliders,
-    MousePointer2 as MousePointerSelect,
     Type,
     Palette,
     Layers,
@@ -354,20 +353,23 @@ export const SidebarRight: React.FC = () => {
                                 {/* Font Selection */}
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Typography</label>
-                                    <div className="grid gap-2">
-                                        {['Inter', 'Outfit', 'Playfair Display', 'Space Grotesk'].map(font => (
+                                    <div className="grid grid-cols-1 gap-1.5 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
+                                        {GOOGLE_FONTS.map(font => (
                                             <button
                                                 key={font}
-                                                onClick={() => setTheme({ fontFamily: font })}
+                                                onClick={() => {
+                                                    setTheme({ fontFamily: font });
+                                                }}
                                                 className={cn(
-                                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium border transition-all",
+                                                    "w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between group border",
                                                     layout.theme.fontFamily === font
-                                                        ? "bg-foreground text-background border-foreground shadow-sm"
-                                                        : "bg-muted/10 border-transparent hover:border-border"
+                                                        ? "bg-foreground text-background border-foreground shadow-md"
+                                                        : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
                                                 )}
                                                 style={{ fontFamily: font }}
                                             >
-                                                {font}
+                                                <span>{font}</span>
+                                                {layout.theme.fontFamily === font && <Check size={10} strokeWidth={4} />}
                                             </button>
                                         ))}
                                     </div>

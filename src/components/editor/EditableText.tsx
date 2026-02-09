@@ -9,6 +9,7 @@ interface EditableTextProps {
     className?: string;
     as?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'button' | 'div' | 'a';
     multiline?: boolean;
+    isExport?: boolean;
     [key: string]: any;
 }
 
@@ -19,6 +20,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
     className,
     as: Tag = 'p',
     multiline = false,
+    isExport = false,
     ...props
 }) => {
     const { updateComponent } = useStore();
@@ -51,6 +53,14 @@ export const EditableText: React.FC<EditableTextProps> = ({
             contentRef.current?.blur();
         }
     }, [multiline, value]);
+
+    if (isExport) {
+        return (
+            <Tag className={className} {...props}>
+                {localValue}
+            </Tag>
+        );
+    }
 
     return (
         <Tag

@@ -16,9 +16,9 @@ export const Canvas: React.FC = () => {
     });
 
     // Check if Dark Mode SaaS template is active (more reliable detection)
-    const isPixelsTemplate = layout.components.some(comp => 
+    const isPixelsTemplate = layout.components.some(comp =>
         comp.type === 'header' && comp.variant === 'pixels'
-    ) || layout.components.some(comp => 
+    ) || layout.components.some(comp =>
         comp.variant === 'pixels'
     );
 
@@ -27,12 +27,13 @@ export const Canvas: React.FC = () => {
             ref={setNodeRef}
             className={cn(
                 "shadow-2xl mx-auto transition-all min-h-[calc(100vh-120px)] rounded-sm border ring-1 ring-border/50",
-                isPixelsTemplate 
-                    ? "bg-slate-950 border-slate-800" 
+                isPixelsTemplate
+                    ? "bg-slate-950 border-slate-800"
                     : "bg-background",
                 editor.previewMode === 'desktop' ? "w-full" :
                     editor.previewMode === 'tablet' ? "w-[768px]" : "w-[375px]"
             )}
+            style={{ fontFamily: `'${layout.theme.fontFamily}', sans-serif` }}
             onClick={() => selectComponent(null)}
         >
             <div className="flex flex-col min-h-[200px]">

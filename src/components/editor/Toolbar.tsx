@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { saveAs } from 'file-saver';
 import {
     Monitor,
     Tablet,
@@ -6,8 +7,6 @@ import {
     Undo2,
     Redo2,
     Download,
-    Moon,
-    Sun,
     Palette,
     Globe,
     ChevronDown,
@@ -18,17 +17,19 @@ import {
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { generateStandaloneHTML } from '../../lib/export';
+import { generateZIPExport } from '../../lib/export/zip';
 import { cn } from '../../lib/utils';
+import { Archive } from 'lucide-react';
 
 export const Toolbar: React.FC = () => {
-    const [showHistory, setShowHistory] = React.useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const {
         editor,
         setPreviewMode,
         undo,
         redo,
         layout,
-        setThemeMode,
         setThemeColor,
         importLayout,
         saveVersion,
@@ -46,18 +47,41 @@ export const Toolbar: React.FC = () => {
         { name: 'أخضر', value: '#10b981', foreground: '#ffffff' },
     ];
 
-    const handleExportHTML = () => {
-        console.log('Exporting layout:', layout); // Debug log
-        console.log('Layout components:', layout.components); // Debug log
-        console.log('Layout theme:', layout.theme); // Debug log
-        const htmlContent = generateStandaloneHTML(layout);
-        const dataStr = "data:text/html;charset=utf-8," + encodeURIComponent(htmlContent);
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `${layout.name.toLowerCase().replace(/\s+/g, '-')}.html`);
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+    const handleExportHTML = async () => {
+        setIsExporting(true);
+        try {
+            // Small delay for better visual feedback
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            const htmlContent = generateStandaloneHTML(layout);
+            const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+            const filename = `${layout.name.toLowerCase().replace(/\s+/g, '-') || 'page'}.html`;
+
+            saveAs(blob, filename);
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Export failed. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleExportZIP = async () => {
+        setIsExporting(true);
+        try {
+            // Small delay for better visual feedback
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const blob = await generateZIPExport(layout);
+            const filename = `${layout.name.toLowerCase().replace(/\s+/g, '-') || 'project'}.zip`;
+
+            saveAs(blob, filename);
+        } catch (error) {
+            console.error('ZIP Export failed:', error);
+            alert('ZIP Export failed. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     const handleExportJSON = () => {
@@ -296,9 +320,27 @@ export const Toolbar: React.FC = () => {
                             <ChevronDown size={12} className="opacity-50" />
                         </button>
                         <div className="absolute right-0 top-full mt-2 w-48 bg-background border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-1">
-                            <button onClick={handleExportHTML} className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 text-xs font-bold transition-all text-left">
-                                <Globe size={14} className="text-muted-foreground" />
-                                Export as HTML
+                            <button
+                                onClick={handleExportHTML}
+                                disabled={isExporting}
+                                className={cn(
+                                    "w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 text-xs font-bold transition-all text-left",
+                                    isExporting && "opacity-50 cursor-wait"
+                                )}
+                            >
+                                <Globe size={14} className={cn("text-muted-foreground", isExporting && "animate-spin")} />
+                                {isExporting ? 'Exporting...' : 'Export as HTML'}
+                            </button>
+                            <button
+                                onClick={handleExportZIP}
+                                disabled={isExporting}
+                                className={cn(
+                                    "w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 text-xs font-bold transition-all text-left",
+                                    isExporting && "opacity-50 cursor-wait"
+                                )}
+                            >
+                                <Archive size={14} className={cn("text-muted-foreground", isExporting && "animate-pulse")} />
+                                {isExporting ? 'Preparing ZIP...' : 'Export as ZIP'}
                             </button>
                             <button onClick={handleExportJSON} className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 text-xs font-bold transition-all text-left">
                                 <FileJson size={14} className="text-muted-foreground" />

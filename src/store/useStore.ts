@@ -40,6 +40,20 @@ interface StoreState {
 
 const STORAGE_KEY = 'landing-builder-layout';
 
+export const GOOGLE_FONTS = [
+    'Inter',
+    'Outfit',
+    'Space Grotesk',
+    'Plus Jakarta Sans',
+    'Bricolage Grotesque',
+    'Playfair Display',
+    'Montserrat',
+    'Poppins',
+    'Roboto',
+    'Lora',
+    'Sora',
+];
+
 const DEFAULT_LAYOUT: LayoutSchema = {
     id: uuidv4(),
     name: 'New Page',
@@ -100,9 +114,9 @@ export const useStore = create<StoreState>((set, get) => ({
         set({ isAutoSaving: true });
         const currentState = get().layout;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-        set({ 
-            isAutoSaving: false, 
-            lastSaveTime: Date.now() 
+        set({
+            isAutoSaving: false,
+            lastSaveTime: Date.now()
         });
     },
 
@@ -243,7 +257,7 @@ export const useStore = create<StoreState>((set, get) => ({
             if (!data.theme || typeof data.theme !== 'object') {
                 throw new Error('Invalid layout: missing theme object');
             }
-            
+
             set({ layout: data, history: [data], historyIndex: 0 });
             localStorage.setItem(STORAGE_KEY, json);
             alert('Layout imported successfully!');
@@ -343,7 +357,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
     applyTemplate: (templateName) => {
         console.log('applyTemplate called with:', templateName); // Debug log
-        
+
         // Template configurations with component types, variants, and styles
         const templates: Record<string, { components: ComponentType[], variants?: Record<number, string>, glassmorphism?: number[] }> = {
             'SaaS Startup': {
@@ -390,7 +404,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
         const template = templates[templateName] || templates['SaaS Startup'];
         console.log('Selected template:', templateName, 'Template data:', template); // Debug log
-        
+
         const newComponents: LayoutComponent[] = template.components.map((type, index) => ({
             id: uuidv4(),
             type,
@@ -412,6 +426,7 @@ export const useStore = create<StoreState>((set, get) => ({
                     mode: 'dark',
                     primaryColor: '#db2777', // pink-600
                     secondaryColor: '#020617', // slate-950 (background)
+                    fontFamily: 'Space Grotesk',
                 };
             }
 
@@ -421,6 +436,10 @@ export const useStore = create<StoreState>((set, get) => ({
                     name: templateName,
                     components: newComponents,
                     theme: newTheme,
+                    seo: {
+                        ...state.layout.seo,
+                        title: state.layout.seo.title === 'My Landing Page' ? templateName : state.layout.seo.title
+                    }
                 },
                 editor: {
                     ...state.editor,
@@ -429,9 +448,10 @@ export const useStore = create<StoreState>((set, get) => ({
                 },
             };
         });
-        
+
         // Save to history after applying template
         get().saveToHistory();
+        get().autoSave();
     },
 
     redo: () => {

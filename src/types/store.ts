@@ -76,3 +76,8 @@ export interface EditorState {
         };
     };
 }
+
+// Helper to check if layout is valid
+export const isValidLayout = (layout: any): layout is LayoutSchema => {
+    return layout && typeof layout === 'object' && 'id' in layout && Array.isArray(layout.components);
+};

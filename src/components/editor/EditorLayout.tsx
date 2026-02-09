@@ -50,6 +50,21 @@ export const EditorLayout: React.FC = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [undo, redo, saveVersion]);
 
+    // Dynamic Font Loading
+    useEffect(() => {
+        const font = layout.theme.fontFamily;
+        if (font) {
+            const fontId = `google-font-${font.replace(/\s+/g, '-').toLowerCase()}`;
+            if (!document.getElementById(fontId)) {
+                const link = document.createElement('link');
+                link.id = fontId;
+                link.rel = 'stylesheet';
+                link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, '+')}:wght@400;500;600;700;800;900&display=swap`;
+                document.head.appendChild(link);
+            }
+        }
+    }, [layout.theme.fontFamily]);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -112,6 +127,7 @@ export const EditorLayout: React.FC = () => {
                     --primary-foreground: ${['#f59e0b'].includes(layout.theme.primaryColor) ? '#000000' : '#ffffff'} !important;
                     --color-primary-foreground: ${['#f59e0b'].includes(layout.theme.primaryColor) ? '#000000' : '#ffffff'} !important;
                     --font-family: '${layout.theme.fontFamily}', sans-serif !important;
+                    --font-sans: '${layout.theme.fontFamily}', sans-serif !important;
                 }
             ` }} />
             <div
