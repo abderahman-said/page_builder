@@ -1,22 +1,129 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore, GOOGLE_FONTS } from '../../store/useStore';
 import {
     Trash2,
     Sliders,
     Type,
     Palette,
-    Layers,
-    ChevronRight,
     Layout,
     Check,
     Globe,
     Search,
-    Image as ImageIcon
+    ImageIcon,
+    ChevronDown,
+    RotateCcw,
+    ExternalLink,
+    Settings2,
+    Monitor,
+    Activity,
+    PanelBottom
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+// Helper for mapping prop keys to human readable labels
+const PROP_LABELS: Record<string, string> = {
+    badgeText: 'Badge Label',
+    title: 'Main Heading',
+    subtitle: 'Description',
+    cta: 'Primary Action',
+    secondaryCta: 'Secondary Action',
+    showcaseTitle: 'Portfolio Title',
+    showcaseDescription: 'Portfolio Text',
+    linkText: 'Link Label',
+    items: 'Collection Items',
+    links: 'Navigation Links',
+    columns: 'Footer Columns',
+    credits: 'Copyright Text',
+    footerLogoImage: 'Brand Logo',
+    logoImage: 'Brand Logo',
+    logo: 'Brand Name',
+    quote: 'Testimonial',
+    name: 'Full Name',
+    role: 'Job Title / Role',
+    avatar: 'User Avatar',
+    icon: 'Visual Icon',
+    price: 'Price Amount',
+    popularLabel: 'Feature Tag',
+    popular: 'Featured Item',
+    active: 'Is Visible',
+    content: 'Body Content',
+    question: 'FAQ Question',
+    answer: 'FAQ Answer',
+    emailLabel: 'Email Field Label',
+    nameLabel: 'Name Field Label',
+    messageLabel: 'Message Field Label',
+    buttonText: 'Submit Button'
+};
+
+const getLabel = (key: string) => PROP_LABELS[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+
+// Custom Accordion Component
+const Accordion: React.FC<{
+    title: string;
+    icon: any;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+    badge?: string;
+}> = ({ title, icon: Icon, children, defaultOpen = true, badge }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+    return (
+        <div className="border-b border-border/40">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full h-14 flex items-center justify-between px-6 hover:bg-muted/30 transition-all group"
+            >
+                <div className="flex items-center gap-3">
+                    <div className={cn(
+                        "p-2 rounded-lg transition-all",
+                        isOpen ? "bg-foreground text-background" : "bg-muted text-muted-foreground group-hover:text-foreground"
+                    )}>
+                        <Icon size={14} />
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-foreground/80 group-hover:text-foreground">
+                        {title}
+                    </span>
+                    {badge && (
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[8px] font-black uppercase tracking-tighter">
+                            {badge}
+                        </span>
+                    )}
+                </div>
+                <ChevronDown size={14} className={cn("text-muted-foreground transition-transform duration-300", isOpen ? "rotate-0" : "-rotate-90")} />
+            </button>
+            <div className={cn(
+                "overflow-hidden transition-all duration-300 ease-in-out",
+                isOpen ? "max-h-[5000px] opacity-100 mb-6" : "max-h-0 opacity-0"
+            )}>
+                <div className="px-6 pt-2">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Custom Switch Component
+const Switch: React.FC<{ checked: boolean; onChange: (v: boolean) => void; label: string }> = ({ checked, onChange, label }) => (
+    <div
+        onClick={() => onChange(!checked)}
+        className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 cursor-pointer hover:border-foreground/20 transition-all group"
+    >
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
+        <div className={cn(
+            "w-10 h-5 rounded-full relative transition-all duration-300 shadow-inner",
+            checked ? "bg-primary shadow-primary/20" : "bg-muted-foreground/20"
+        )}>
+            <div className={cn(
+                "absolute top-1 bottom-1 w-3 rounded-full bg-background shadow-md transition-all duration-300",
+                checked ? "left-6" : "left-1"
+            )} />
+        </div>
+    </div>
+);
+
 export const SidebarRight: React.FC = () => {
-    const [activeTab, setActiveTab] = React.useState<'component' | 'page'>('component');
+    const [activeTab, setActiveTab] = React.useState<'design' | 'page'>('design');
+    const [expandedItem, setExpandedItem] = React.useState<string | null>(null);
     const {
         editor,
         layout,
@@ -34,458 +141,401 @@ export const SidebarRight: React.FC = () => {
         (c) => c.id === editor.selectedComponentId
     );
 
-    const VARIANTS = ['v1', 'v2', 'v3'];
-
-    // Auto-switch to page tab if no component is selected
+    // Auto-switch back to designer if component selected
     React.useEffect(() => {
-        if (!selectedComponent) {
-            setActiveTab('page');
-        } else {
-            setActiveTab('component');
-        }
+        if (selectedComponent) setActiveTab('design');
+        else setActiveTab('page');
     }, [selectedComponent?.id]);
 
+    const VARIANTS = ['v1', 'v2', 'v3'];
+
     return (
-        <aside className="w-[320px] border-l bg-background flex flex-col z-20 shadow-[inset_1px_0_0_0_rgba(0,0,0,0.05)] relative">
-            {/* Header */}
-            <div className="p-5 border-b flex items-center justify-between bg-background sticky top-0 z-10">
-                <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-foreground text-background">
-                        {activeTab === 'component' ? <Sliders size={14} /> : <Globe size={14} />}
+        <aside className="w-[340px] border-l bg-background flex flex-col z-20 shadow-sm relative h-full">
+            {/* Context Header */}
+            <div className="h-16 border-b flex items-center justify-between px-6 bg-background/80 backdrop-blur-xl sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-foreground text-background shadow-lg shadow-black/10">
+                        {activeTab === 'design' ? <Activity size={16} /> : <Globe size={16} />}
                     </div>
-                    <div>
-                        <h2 className="text-xs font-bold uppercase tracking-widest leading-none">
-                            {activeTab === 'component' ? 'Component' : 'Page'} Settings
+                    <div className="flex flex-col">
+                        <h2 className="text-[11px] font-black uppercase tracking-tighter leading-none text-foreground">
+                            {activeTab === 'design' ? 'Interaction' : 'Workspace'}
                         </h2>
-                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-tighter">
-                            {activeTab === 'component' && selectedComponent ? `${selectedComponent.type} block` : 'Global Configuration'}
+                        <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest mt-1 opacity-60 italic">
+                            {activeTab === 'design' && selectedComponent ? `${selectedComponent.type} block` : 'Global Workspace'}
                         </span>
                     </div>
                 </div>
-                {activeTab === 'component' && selectedComponent && (
-                    <button
-                        onClick={() => {
-                            if (confirm('Are you sure you want to delete this block?')) {
-                                removeComponent(selectedComponent.id);
-                            }
-                        }}
-                        className="p-2 rounded-lg hover:bg-destructive/5 text-muted-foreground hover:text-destructive transition-all group"
-                        title="Delete section"
-                    >
-                        <Trash2 size={15} />
+
+                <div className="flex items-center gap-2">
+                    <button className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
+                        <Monitor size={14} />
                     </button>
-                )}
+                    {selectedComponent && (
+                        <button
+                            onClick={() => confirm('Delete this block?') && removeComponent(selectedComponent.id)}
+                            className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex border-b bg-muted/20 p-1 gap-1">
+            {/* Mode Switcher */}
+            <div className="px-6 py-4 flex gap-2">
                 <button
-                    onClick={() => selectedComponent && setActiveTab('component')}
+                    onClick={() => setActiveTab('design')}
                     disabled={!selectedComponent}
                     className={cn(
-                        "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
-                        activeTab === 'component'
-                            ? "bg-background shadow-sm text-foreground ring-1 ring-border/20"
-                            : "text-muted-foreground hover:text-foreground disabled:opacity-30"
+                        "flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl transition-all border",
+                        activeTab === 'design'
+                            ? "bg-foreground text-background border-foreground shadow-lg shadow-black/10"
+                            : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted/50 disabled:opacity-20 translate-y-0"
                     )}
                 >
-                    <Sliders size={12} />
-                    Block
+                    <Sliders size={16} strokeWidth={2.5} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em]">Editor</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('page')}
                     className={cn(
-                        "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                        "flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl transition-all border",
                         activeTab === 'page'
-                            ? "bg-background shadow-sm text-foreground ring-1 ring-border/20"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-foreground text-background border-foreground shadow-lg shadow-black/10"
+                            : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted/50"
                     )}
                 >
-                    <Globe size={12} />
-                    Page
+                    <Settings2 size={16} strokeWidth={2.5} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em]">Global</span>
                 </button>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {activeTab === 'component' && selectedComponent ? (
-                    <>
-                        {/* Variant Selector */}
-                        <section className="p-5 border-b space-y-4">
-                            <div className="flex items-center gap-2">
-                                <Layout size={14} className="text-muted-foreground" />
-                                <h3 className="text-[11px] font-bold uppercase tracking-widest text-foreground/80">Section Variant</h3>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
+                {activeTab === 'design' && selectedComponent ? (
+                    <div className="flex flex-col">
+                        <Accordion title="Visual Variant" icon={Layout} badge={selectedComponent.variant}>
+                            <div className="grid grid-cols-3 gap-3">
                                 {VARIANTS.map((v) => (
                                     <button
                                         key={v}
                                         onClick={() => updateComponent(selectedComponent.id, { variant: v })}
                                         className={cn(
-                                            "relative h-12 rounded-lg border transition-all flex items-center justify-center font-bold text-xs group",
+                                            "relative aspect-[4/3] rounded-xl border-2 transition-all flex items-center justify-center font-black text-[10px] uppercase italic tracking-tighter disabled:opacity-50",
                                             selectedComponent.variant === v
-                                                ? "bg-foreground text-background border-foreground shadow-lg shadow-black/10"
-                                                : "bg-muted/30 border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground"
+                                                ? "bg-foreground text-background border-foreground shadow-xl shadow-black/10 scale-105 z-10"
+                                                : "bg-muted/10 border-border/40 hover:border-foreground/20 text-muted-foreground"
                                         )}
                                     >
-                                        {v.toUpperCase()}
+                                        V{v.slice(1)}
                                         {selectedComponent.variant === v && (
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-foreground text-background border-2 border-background flex items-center justify-center">
+                                            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-foreground text-background border-2 border-background flex items-center justify-center shadow-md">
                                                 <Check size={8} strokeWidth={4} />
                                             </div>
                                         )}
                                     </button>
                                 ))}
                             </div>
-                        </section>
+                        </Accordion>
 
-                        <div className="p-5 space-y-8">
-                            {/* Content Section */}
+                        <Accordion title="Content Strategy" icon={Type} defaultOpen={true}>
                             <div className="space-y-6">
-                                <div className="flex items-center gap-2">
-                                    <Type size={14} className="text-muted-foreground" />
-                                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-foreground/80">Content</h3>
-                                </div>
+                                {Object.entries(selectedComponent.props).map(([key, value]) => {
+                                    if (key === 'centered' || key === 'popular') return null;
 
-                                <div className="grid gap-5">
-                                    {Object.entries(selectedComponent.props).map(([key, value]) => {
-                                        if (key === 'centered' || key === 'popular') return null;
-
-                                        // Special rendering for arrays (items, links)
-                                        if (Array.isArray(value)) {
-                                            return (
-                                                <div key={key} className="space-y-4 border-t pt-4 mt-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <label className="text-[10px] font-bold uppercase tracking-wider text-primary leading-none">{key}</label>
-                                                        <span className="text-[9px] text-muted-foreground/60 font-mono">ARRAY</span>
-                                                    </div>
-                                                    <div className="space-y-4 pl-2 border-l-2 border-primary/10">
-                                                        {value.map((item: any, index: number) => {
-                                                            const isItemFocused = editor.focusedPropKey?.startsWith(`${key}.${index}.`);
-
-                                                            return (
-                                                                <div key={index} className={cn(
-                                                                    "space-y-3 p-3 rounded-xl border transition-all",
-                                                                    isItemFocused ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20" : "bg-muted/10 border-border/40"
-                                                                )}>
-                                                                    <div className="text-[9px] font-bold text-muted-foreground uppercase">Item #{index + 1}</div>
-                                                                    {Object.entries(item).map(([subKey, subValue]) => {
-                                                                        if (Array.isArray(subValue)) return null; // Don't handle triple nested arrays for now
-
-                                                                        const path = `${key}.${index}.${subKey}`;
-                                                                        const isSubKeyFocused = editor.focusedPropKey === path;
-
-                                                                        return (
-                                                                            <div key={subKey} className={cn(
-                                                                                "space-y-1.5 transition-all p-1 -m-1 rounded-lg",
-                                                                                isSubKeyFocused && "bg-primary/10 ring-1 ring-primary/20"
-                                                                            )}>
-                                                                                <label className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground/70">{subKey}</label>
-                                                                                {typeof subValue === 'string' && (subKey === 'content' || subKey === 'answer' || subKey === 'quote') ? (
-                                                                                    <textarea
-                                                                                        value={subValue}
-                                                                                        onChange={(e) => updateComponent(selectedComponent.id, {
-                                                                                            props: { [path]: e.target.value }
-                                                                                        })}
-                                                                                        className="w-full text-[11px] p-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/10 border-border/50 outline-none min-h-[60px] resize-none transition-all font-medium"
-                                                                                    />
-                                                                                ) : typeof subValue === 'boolean' ? (
-                                                                                    <button
-                                                                                        onClick={() => updateComponent(selectedComponent.id, {
-                                                                                            props: { [path]: !subValue }
-                                                                                        })}
-                                                                                        className={cn(
-                                                                                            "w-full py-1.5 rounded-lg text-[10px] font-bold border transition-all",
-                                                                                            subValue ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
-                                                                                        )}
-                                                                                    >
-                                                                                        {subValue ? 'Enabled' : 'Disabled'}
-                                                                                    </button>
-                                                                                ) : (
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        value={subValue as string}
-                                                                                        onChange={(e) => updateComponent(selectedComponent.id, {
-                                                                                            props: { [path]: e.target.value }
-                                                                                        })}
-                                                                                        className="w-full text-[11px] px-2 py-1.5 rounded-lg border bg-background focus:ring-2 focus:ring-primary/10 border-border/50 outline-none transition-all font-bold"
-                                                                                    />
-                                                                                )}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-
-                                        const isFocused = editor.focusedPropKey === key;
-
+                                    // Special rendering for arrays
+                                    if (Array.isArray(value)) {
                                         return (
-                                            <div key={key} className={cn(
-                                                "space-y-2 transition-all p-2 -m-2 rounded-xl",
-                                                isFocused && "bg-primary/10 ring-1 ring-primary/20"
-                                            )}>
+                                            <div key={key} className="space-y-4 pt-2">
                                                 <div className="flex items-center justify-between">
-                                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none">{key.replace(/([A-Z])/g, ' $1')}</label>
-                                                    <span className="text-[9px] text-muted-foreground/60 font-mono">TEXT</span>
+                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground opacity-60">{getLabel(key)}</label>
+                                                    <span className="text-[8px] px-2 py-0.5 rounded bg-muted font-bold text-muted-foreground uppercase">{value.length} items</span>
                                                 </div>
-                                                {key === 'content' || key === 'subtitle' ? (
-                                                    <textarea
-                                                        value={value as string}
-                                                        onChange={(e) => updateComponent(selectedComponent.id, {
-                                                            props: { [key]: e.target.value }
-                                                        })}
-                                                        className="w-full text-xs p-3 rounded-xl border bg-muted/20 focus:bg-background focus:ring-2 focus:ring-foreground/5 border-transparent focus:border-border outline-none min-h-[100px] resize-none transition-all shadow-inner font-medium leading-relaxed"
-                                                    />
-                                                ) : key.toLowerCase().includes('image') || key.toLowerCase().includes('icon') ? (
-                                                    <div
-                                                        onClick={() => openAssetsManager({ id: selectedComponent.id, prop: key, type: key.toLowerCase().includes('icon') ? 'icon' : 'image' })}
-                                                        className="group relative h-24 rounded-xl border-2 border-dashed border-border overflow-hidden cursor-pointer hover:border-primary/50 transition-all bg-muted/10 flex items-center justify-center"
-                                                    >
-                                                        {value ? (
-                                                            <>
-                                                                <img src={value as string} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Change Asset</span>
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex flex-col items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors">
-                                                                <Palette size={16} />
-                                                                <span className="text-[10px] font-bold uppercase tracking-widest">Select Asset</span>
+                                                <div className="space-y-2">
+                                                    {value.map((item: any, index: number) => {
+                                                        const pathBase = `${key}.${index}`;
+                                                        const isExpanded = expandedItem === pathBase;
+                                                        const isFocused = editor.focusedPropKey?.startsWith(`${pathBase}.`);
+
+                                                        return (
+                                                            <div key={index} className={cn(
+                                                                "rounded-2xl border transition-all duration-300 overflow-hidden",
+                                                                isExpanded ? "bg-muted/30 border-foreground/10 mb-4" : "bg-background border-border/40 hover:border-foreground/20",
+                                                                isFocused && "ring-1 ring-primary/30 border-primary/30"
+                                                            )}>
+                                                                <button
+                                                                    onClick={() => setExpandedItem(isExpanded ? null : pathBase)}
+                                                                    className="w-full flex items-center justify-between p-3"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center text-[10px] font-black">
+                                                                            {index + 1}
+                                                                        </div>
+                                                                        <span className="text-[10px] font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">
+                                                                            {item.name || item.title || item.question || item.label || `Item ${index + 1}`}
+                                                                        </span>
+                                                                    </div>
+                                                                    <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+                                                                </button>
+
+                                                                {isExpanded && (
+                                                                    <div className="p-4 pt-0 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                                        {Object.entries(item).map(([subKey, subValue]) => {
+                                                                            if (Array.isArray(subValue)) return null;
+                                                                            const fullPath = `${pathBase}.${subKey}`;
+                                                                            const isFocusedSub = editor.focusedPropKey === fullPath;
+
+                                                                            return (
+                                                                                <div key={subKey} className="space-y-1.5">
+                                                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-80">{getLabel(subKey)}</label>
+                                                                                    {typeof subValue === 'string' && (subKey === 'content' || subKey === 'answer' || subKey === 'quote') ? (
+                                                                                        <textarea
+                                                                                            value={subValue}
+                                                                                            onChange={(e) => updateComponent(selectedComponent.id, { props: { [fullPath]: e.target.value } })}
+                                                                                            className={cn(
+                                                                                                "w-full text-[11px] p-3 rounded-xl border bg-background focus:ring-2 focus:ring-primary/10 border-border/60 outline-none min-h-[80px] resize-none transition-all font-medium",
+                                                                                                isFocusedSub && "border-primary/50 ring-2 ring-primary/5"
+                                                                                            )}
+                                                                                        />
+                                                                                    ) : subKey === 'avatar' || subKey === 'icon' ? (
+                                                                                        <div
+                                                                                            onClick={() => openAssetsManager({ id: selectedComponent.id, prop: fullPath, type: subKey === 'avatar' ? 'image' : 'icon' })}
+                                                                                            className="h-10 rounded-xl border border-border/60 bg-background flex items-center px-3 gap-3 cursor-pointer hover:border-primary/40 transition-all group"
+                                                                                        >
+                                                                                            <div className="size-6 rounded-md bg-muted overflow-hidden flex items-center justify-center">
+                                                                                                <img src={subValue as string} className="w-full h-full object-cover" />
+                                                                                            </div>
+                                                                                            <span className="text-[10px] font-bold opacity-60 group-hover:opacity-100 italic transition-opacity">Replace Asset</span>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={subValue as string}
+                                                                                            onChange={(e) => updateComponent(selectedComponent.id, { props: { [fullPath]: e.target.value } })}
+                                                                                            className={cn(
+                                                                                                "w-full text-[11px] px-3 py-2 rounded-xl border bg-background focus:ring-2 focus:ring-primary/10 border-border/60 outline-none transition-all font-bold",
+                                                                                                isFocusedSub && "border-primary/50 ring-2 ring-primary/5"
+                                                                                            )}
+                                                                                        />
+                                                                                    )}
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        value={value as string}
-                                                        onChange={(e) => updateComponent(selectedComponent.id, {
-                                                            props: { [key]: e.target.value }
-                                                        })}
-                                                        className="w-full text-xs px-3 py-2.5 rounded-xl border bg-muted/20 focus:bg-background focus:ring-2 focus:ring-foreground/5 border-transparent focus:border-border outline-none transition-all shadow-inner font-bold"
-                                                    />
-                                                )}
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         );
-                                    })}
-                                </div>
-                            </div>
+                                    }
 
-                            {/* Styles Section */}
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-2">
-                                    <Palette size={14} className="text-muted-foreground" />
-                                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-foreground/80">Design & Layout</h3>
-                                </div>
+                                    const isFocused = editor.focusedPropKey === key;
 
-                                <div className="grid gap-6">
-                                    {/* Alignment */}
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Alignment</label>
-                                        <div className="flex bg-muted/30 rounded-xl p-1 gap-1 border border-border/40">
-                                            {['left', 'center', 'right'].map((align) => (
-                                                <button
-                                                    key={align}
-                                                    onClick={() => updateComponent(selectedComponent.id, {
-                                                        styles: { ...selectedComponent.styles, textAlign: align as any }
-                                                    })}
+                                    return (
+                                        <div key={key} className="space-y-2">
+                                            <div className="flex items-center justify-between px-1">
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground opacity-60 leading-none">{getLabel(key)}</label>
+                                            </div>
+                                            {key === 'content' || key === 'subtitle' || key === 'description' ? (
+                                                <textarea
+                                                    value={value as string}
+                                                    onChange={(e) => updateComponent(selectedComponent.id, { props: { [key]: e.target.value } })}
                                                     className={cn(
-                                                        "flex-1 text-[10px] py-2 rounded-lg capitalize transition-all font-bold",
-                                                        (selectedComponent.styles.textAlign === align || (!selectedComponent.styles.textAlign && align === 'center'))
-                                                            ? "bg-background text-foreground shadow-sm ring-1 ring-border/20"
-                                                            : "text-muted-foreground hover:text-foreground"
+                                                        "w-full text-[11px] p-4 rounded-2xl border bg-muted/20 focus:bg-background focus:ring-4 focus:ring-foreground/5 border-transparent focus:border-border/60 outline-none min-h-[120px] resize-none transition-all font-medium leading-relaxed",
+                                                        isFocused && "border-primary/50 ring-4 ring-primary/5"
+                                                    )}
+                                                />
+                                            ) : key.toLowerCase().includes('image') || key.toLowerCase().includes('icon') ? (
+                                                <div
+                                                    onClick={() => openAssetsManager({ id: selectedComponent.id, prop: key, type: key.toLowerCase().includes('icon') ? 'icon' : 'image' })}
+                                                    className={cn(
+                                                        "group relative h-28 rounded-2xl border-2 border-dashed border-border/40 overflow-hidden cursor-pointer hover:border-primary/50 transition-all bg-muted/10 flex items-center justify-center",
+                                                        isFocused && "border-primary border-solid scale-[1.02] shadow-xl shadow-primary/5"
                                                     )}
                                                 >
-                                                    {align}
-                                                </button>
-                                            ))}
+                                                    {value ? (
+                                                        <>
+                                                            <img src={value as string} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                                            <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <span className="text-[10px] font-black text-foreground uppercase tracking-widest bg-background px-3 py-1.5 rounded-full shadow-lg border border-border/20">Replace Brand Asset</span>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                                                            <ImageIcon size={20} />
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">Select Asset</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    value={value as string}
+                                                    onChange={(e) => updateComponent(selectedComponent.id, { props: { [key]: e.target.value } })}
+                                                    className={cn(
+                                                        "w-full text-xs px-4 py-3 rounded-2xl border bg-muted/20 focus:bg-background focus:ring-4 focus:ring-foreground/5 border-transparent focus:border-border/60 outline-none transition-all font-black italic tracking-tight",
+                                                        isFocused && "border-primary/50 ring-4 ring-primary/5 bg-background shadow-lg shadow-primary/5"
+                                                    )}
+                                                />
+                                            )}
                                         </div>
-                                    </div>
+                                    );
+                                })}
+                            </div>
+                        </Accordion>
 
-                                    {/* Glassmorphism */}
-                                    <div
-                                        onClick={() => updateComponent(selectedComponent.id, {
-                                            styles: { ...selectedComponent.styles, glassmorphism: !selectedComponent.styles.glassmorphism }
-                                        })}
-                                        className={cn(
-                                            "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group",
-                                            selectedComponent.styles.glassmorphism
-                                                ? "bg-primary/10 border-primary/20 shadow-sm"
-                                                : "bg-muted/20 border-transparent hover:border-border"
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <Layers size={14} className={cn(selectedComponent.styles.glassmorphism ? "text-primary" : "text-muted-foreground")} />
-                                            <span className={cn("text-[10px] font-bold uppercase tracking-widest", selectedComponent.styles.glassmorphism ? "text-primary" : "text-foreground")}>Glassmorphism</span>
-                                        </div>
-                                        <div className={cn(
-                                            "w-8 h-4 rounded-full relative transition-colors duration-200",
-                                            selectedComponent.styles.glassmorphism ? "bg-primary" : "bg-muted-foreground/20"
-                                        )}>
-                                            <div className={cn(
-                                                "absolute top-1 bottom-1 w-2 rounded-full bg-background shadow-sm transition-all duration-200",
-                                                selectedComponent.styles.glassmorphism ? "left-5" : "left-1"
-                                            )} />
-                                        </div>
+                        <Accordion title="Design DNA" icon={Palette} defaultOpen={false}>
+                            <div className="space-y-6">
+                                {/* Alignment */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Layout Alignment</label>
+                                    <div className="flex bg-muted/20 rounded-2xl p-1 gap-1 border border-border/20">
+                                        {['left', 'center', 'right'].map((align) => (
+                                            <button
+                                                key={align}
+                                                onClick={() => updateComponent(selectedComponent.id, { styles: { ...selectedComponent.styles, textAlign: align as any } })}
+                                                className={cn(
+                                                    "flex-1 text-[10px] py-2 rounded-xl capitalize transition-all font-black uppercase tracking-widest",
+                                                    (selectedComponent.styles.textAlign === align || (!selectedComponent.styles.textAlign && align === 'center'))
+                                                        ? "bg-background text-foreground shadow-sm ring-1 ring-border/50 translate-z-10"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                )}
+                                            >
+                                                {align}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="p-5 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                        {/* SEO Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2">
-                                <Search size={14} className="text-muted-foreground" />
-                                <h3 className="text-[11px] font-bold uppercase tracking-widest text-foreground/80">Search Engine Optimization</h3>
-                            </div>
 
-                            <div className="grid gap-5">
+                                {/* Popular Switch for specific components */}
+                                {selectedComponent.props.popular !== undefined && (
+                                    <Switch
+                                        label="Highlight Section"
+                                        checked={!!selectedComponent.props.popular}
+                                        onChange={(v) => updateComponent(selectedComponent.id, { props: { popular: v } })}
+                                    />
+                                )}
+
+                                {/* Glassmorphism */}
+                                <Switch
+                                    label="Blur Background"
+                                    checked={selectedComponent.styles.glassmorphism}
+                                    onChange={(v) => updateComponent(selectedComponent.id, { styles: { ...selectedComponent.styles, glassmorphism: v } })}
+                                />
+                            </div>
+                        </Accordion>
+                    </div>
+                ) : (
+                    <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-500">
+                        <Accordion title="Search Settings" icon={Search} defaultOpen={true}>
+                            <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none">Page Title</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60 leading-none">Global Page Title</label>
                                     <input
                                         type="text"
                                         value={layout.seo?.title || ''}
                                         onChange={(e) => setSEO({ title: e.target.value })}
-                                        placeholder="e.g., My Awesome Product"
-                                        className="w-full text-xs px-3 py-2.5 rounded-xl border bg-muted/20 focus:bg-background focus:ring-2 focus:ring-primary/20 border-transparent focus:border-primary outline-none transition-all shadow-inner font-bold"
+                                        className="w-full text-xs px-4 py-3 rounded-2xl border bg-muted/20 focus:bg-background focus:ring-4 focus:ring-primary/5 border-transparent focus:border-primary/40 outline-none transition-all font-black italic tracking-tight"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none">Meta Description</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60 leading-none">Meta Description</label>
                                     <textarea
                                         value={layout.seo?.description || ''}
                                         onChange={(e) => setSEO({ description: e.target.value })}
-                                        placeholder="Briefly describe your page for search results..."
-                                        className="w-full text-xs p-3 rounded-xl border bg-muted/20 focus:bg-background focus:ring-2 focus:ring-primary/20 border-transparent focus:border-primary outline-none min-h-[100px] resize-none transition-all shadow-inner font-medium leading-relaxed"
+                                        className="w-full text-xs p-4 rounded-2xl border bg-muted/20 focus:bg-background focus:ring-4 focus:ring-primary/5 border-transparent focus:border-primary/40 outline-none min-h-[120px] resize-none transition-all font-medium"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none">Social Share Image (OG)</label>
-                                    <div
-                                        onClick={() => openAssetsManager({ id: 'seo', prop: 'ogImage', type: 'image' })}
-                                        className="group relative h-32 rounded-xl border-2 border-dashed border-border overflow-hidden cursor-pointer hover:border-primary/50 transition-all bg-muted/10 flex items-center justify-center"
-                                    >
-                                        {layout.seo?.ogImage ? (
-                                            <>
-                                                <img src={layout.seo.ogImage} alt="OG Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Change Image</span>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="flex flex-col items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors text-center p-4">
-                                                <ImageIcon size={20} />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">Select OG Image</span>
-                                                <p className="text-[8px] opacity-70 mt-1 uppercase font-bold tracking-tighter">Recommended: 1200x630</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
-                        </div>
+                        </Accordion>
 
-                        {/* Global Styles */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2">
-                                <Palette size={14} className="text-muted-foreground" />
-                                <h3 className="text-[11px] font-bold uppercase tracking-widest text-foreground/80">Global Visuals</h3>
-                            </div>
-
-                            <div className="grid gap-6">
+                        <Accordion title="Brand Visuals" icon={Palette} defaultOpen={true}>
+                            <div className="space-y-6 pb-2">
                                 {/* Theme Color */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Primary Brand Color</label>
-                                    <div className="flex items-center gap-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Primary Brand Color</label>
+                                    <div className="flex items-center gap-4">
                                         <div
-                                            className="w-8 h-8 rounded-full border-4 border-muted/50 shadow-lg cursor-pointer transition-transform hover:scale-110 relative overflow-hidden"
+                                            className="w-10 h-10 rounded-2xl border-4 border-muted/50 shadow-xl cursor-pointer transition-transform hover:scale-110 relative overflow-hidden group"
                                             style={{ backgroundColor: layout.theme.primaryColor }}
                                         >
                                             <input
                                                 type="color"
                                                 value={layout.theme.primaryColor}
                                                 onChange={(e) => setThemeColor(e.target.value)}
-                                                className="absolute inset-0 opacity-0 cursor-pointer scale-150"
+                                                className="absolute inset-0 opacity-0 cursor-pointer scale-[5]"
                                             />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+                                                <Palette size={14} className="text-white drop-shadow-md" />
+                                            </div>
                                         </div>
-                                        <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl bg-muted/20 border border-transparent hover:border-border transition-all group relative">
-                                            <span className="text-[11px] font-mono font-bold uppercase">{layout.theme.primaryColor}</span>
-                                            <ChevronRight size={12} className="text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                                            <input
-                                                type="color"
-                                                value={layout.theme.primaryColor}
-                                                onChange={(e) => setThemeColor(e.target.value)}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                            />
+                                        <div className="flex-1 flex items-center justify-between px-4 py-2.5 rounded-2xl bg-muted/20 border border-transparent hover:border-border transition-all">
+                                            <span className="text-xs font-black italic uppercase tracking-tighter">{layout.theme.primaryColor}</span>
+                                            <ExternalLink size={10} className="text-muted-foreground opacity-40" />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Font Selection */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Typography</label>
-                                    <div className="grid grid-cols-1 gap-1.5 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Global Typography</label>
+                                    <div className="grid grid-cols-1 gap-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 p-1">
                                         {GOOGLE_FONTS.map(font => (
                                             <button
                                                 key={font}
-                                                onClick={() => {
-                                                    setTheme({ fontFamily: font });
-                                                }}
+                                                onClick={() => setTheme({ fontFamily: font })}
                                                 className={cn(
-                                                    "w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between group border",
+                                                    "w-full text-left px-4 py-3 rounded-xl text-xs transition-all flex items-center justify-between group border-2",
                                                     layout.theme.fontFamily === font
-                                                        ? "bg-foreground text-background border-foreground shadow-md"
-                                                        : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
+                                                        ? "bg-foreground text-background border-foreground shadow-xl scale-[1.02] z-10"
+                                                        : "bg-muted/10 border-transparent hover:border-border/60 hover:bg-muted/20"
                                                 )}
                                                 style={{ fontFamily: font }}
                                             >
-                                                <span>{font}</span>
+                                                <span className="font-medium tracking-tight">{font}</span>
                                                 {layout.theme.fontFamily === font && <Check size={10} strokeWidth={4} />}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Accordion>
                     </div>
                 )}
             </div>
 
-            {/* Sticky Actions */}
-            {activeTab === 'component' && selectedComponent ? (
-                <div className="p-4 border-t bg-background/80 backdrop-blur-md sticky bottom-0 flex gap-2">
+            {/* Bottom Actions */}
+            <div className="p-6 border-t bg-background/80 backdrop-blur-xl flex flex-col gap-3">
+                {activeTab === 'design' && selectedComponent ? (
+                    <>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => confirm('Revert all changes?') && resetComponent(selectedComponent.id)}
+                                className="flex-1 h-12 rounded-2xl bg-muted/30 hover:bg-muted/50 text-[10px] font-black uppercase tracking-widest transition-all border border-transparent hover:border-border/40 text-muted-foreground flex items-center justify-center gap-2"
+                            >
+                                <RotateCcw size={14} />
+                                Reset
+                            </button>
+                            <button
+                                onClick={() => selectComponent(null)}
+                                className="flex-[2] h-12 rounded-2xl bg-foreground text-background text-[10px] font-black uppercase tracking-[0.2em] hover:shadow-2xl hover:shadow-black/20 transition-all flex items-center justify-center gap-2 group"
+                            >
+                                <Check size={16} strokeWidth={4} />
+                                Apply Changes
+                            </button>
+                        </div>
+                    </>
+                ) : (
                     <button
-                        onClick={() => {
-                            if (confirm('Revert all changes to this block to defaults?')) {
-                                resetComponent(selectedComponent.id);
-                            }
-                        }}
-                        className="flex-1 py-2.5 rounded-xl bg-muted/40 hover:bg-muted/60 text-xs font-bold transition-all border border-transparent hover:border-border"
+                        className="w-full h-12 rounded-2xl bg-foreground text-background text-[10px] font-black uppercase tracking-[0.2em] hover:shadow-2xl hover:shadow-black/20 transition-all flex items-center justify-center gap-2"
                     >
-                        Reset
+                        <PanelBottom size={16} />
+                        Publish Site
                     </button>
-                    <button
-                        onClick={() => selectComponent(null)}
-                        className="flex-[2] py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:shadow-xl hover:shadow-primary/20 transition-all border border-primary/20"
-                    >
-                        Apply Changes
-                    </button>
-                </div>
-            ) : (
-                <div className="p-4 border-t bg-background/80 backdrop-blur-md sticky bottom-0 flex gap-2">
-                    <button
-                        className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:shadow-xl hover:shadow-primary/20 transition-all border border-primary/20 flex items-center justify-center gap-2"
-                    >
-                        <Check size={14} />
-                        Done Editing Page
-                    </button>
-                </div>
-            )}
+                )}
+            </div>
         </aside>
     );
 };

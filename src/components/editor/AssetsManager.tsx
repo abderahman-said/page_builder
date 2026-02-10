@@ -167,6 +167,40 @@ export const AssetsManager: React.FC = () => {
                         >
                             Cancel
                         </button>
+
+                        {/* Hidden File Input */}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            id="local-image-upload"
+                            className="hidden"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                setIsLoading(true);
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                    const base64 = reader.result as string;
+                                    // Small delay to show loading state
+                                    setTimeout(() => {
+                                        selectAsset(base64);
+                                        setIsLoading(false);
+                                    }, 500);
+                                };
+                                reader.readAsDataURL(file);
+                            }}
+                        />
+
+                        <button
+                            onClick={() => document.getElementById('local-image-upload')?.click()}
+                            disabled={isLoading}
+                            className="px-4 py-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-xl hover:bg-secondary/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            <Cloud size={14} />
+                            <span>Upload</span>
+                        </button>
+
                         <button
                             onClick={() => {
                                 setIsLoading(true);
