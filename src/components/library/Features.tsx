@@ -2,101 +2,135 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { ArrowUpRight, Check } from 'lucide-react';
 import { EditableText } from '../editor/EditableText';
+import { EditableImage } from '../editor/EditableImage';
 import type { BaseComponentProps, FeatureItem } from './shared-types';
 
 interface FeaturesProps extends BaseComponentProps {
     title: string;
+    badgeText?: string;
+    subtitle?: string;
+    description?: string;
+    showcaseTitle?: string;
+    showcaseDescription?: string;
+    linkText?: string;
     items: FeatureItem[];
 }
 
-export const Features: React.FC<FeaturesProps> = ({ id, title, items, styles, variant, isExport }) => {
+export const Features: React.FC<FeaturesProps> = ({
+    id,
+    title,
+    badgeText = 'Features',
+    subtitle,
+    showcaseTitle,
+    showcaseDescription,
+    linkText = 'Learn more',
+    items,
+    styles,
+    variant,
+    isExport
+}) => {
     if (variant === 'pixels') {
         return (
-            <section id="features" className="px-6 md:px-10  scroll-mt-20 py-32">
-                <p className="text-center font-bold text-pink-600 px-12 py-3 rounded-full bg-pink-950/70 border border-pink-800 w-max mx-auto text-sm uppercase tracking-widest">
-                    Features
-                </p>
-                <EditableText
-                    id={id}
-                    propKey="title"
-                    value={title}
-                    as="h3"
-                    className="text-5xl md:text-7xl font-bold text-center mx-auto mt-8 text-white tracking-tight"
-                    isExport={isExport}
-                />
-                <p className="text-slate-400 text-center mt-6 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed">
-                    Components, patterns and pages — everything you need to ship.
-                </p>
+            <section className="py-32 px-6 md:px-10 bg-slate-950 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-pink-600/5 blur-[120px] rounded-full pointer-events-none" />
 
-                <div className="flex flex-wrap items-center justify-center gap-8 md:gap-10 mt-24 px-6">
-                    <div className="p-10 rounded-[32px] space-y-6 border border-slate-800 bg-slate-950 max-w-[400px] w-full hover:border-pink-500/50 transition-all duration-300 hover:scale-105 shadow-2xl">
-                        <img alt="Lightning-fast setup" src="pixels/zap-icon.svg" className="w-16 h-16" />
-                        <h3 className="text-2xl font-bold text-white leading-tight">Lightning-fast setup</h3>
-                        <p className="text-slate-400 text-lg leading-relaxed pb-4">Launch production-ready pages in minutes with prebuilt components.</p>
-                    </div>
-                    <div className="p-px rounded-[33px] bg-gradient-to-br from-pink-600 to-slate-800 hover:scale-105 transition-transform duration-300">
-                        <div className="p-10 rounded-[32px] space-y-6 border border-slate-800 bg-slate-950 max-w-[400px] w-full h-full shadow-2xl">
-                            <img alt="Pixel perfect" src="pixels/thumb-icon.svg" className="w-16 h-16" />
-                            <h3 className="text-2xl font-bold text-white leading-tight">Pixel perfect</h3>
-                            <p className="text-slate-400 text-lg leading-relaxed pb-4">Modern Figma-driven UI that translates to exact code.</p>
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col lg:flex-row gap-20 items-start">
+                        <div className="flex-1 space-y-8">
+                            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-pink-950/70 border border-pink-800 text-pink-500 text-xs font-bold uppercase tracking-[0.2em]">
+                                <EditableText id={id} propKey="badgeText" value={badgeText} as="span" isExport={isExport} />
+                            </div>
+                            <EditableText id={id} propKey="title" value={title} as="h2" className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none" isExport={isExport} />
+                            {subtitle && <EditableText id={id} propKey="subtitle" value={subtitle} as="p" className="text-xl md:text-2xl text-slate-400 max-w-2xl leading-relaxed" isExport={isExport} />}
+
+                            <div className="flex flex-col gap-6 pt-8">
+                                {items?.map((item, i) => (
+                                    <div key={i} className="flex gap-6 group">
+                                        <div className="mt-1 size-8 rounded-xl bg-pink-600/10 border border-pink-500/20 flex items-center justify-center shrink-0 group-hover:bg-pink-600 group-hover:text-white transition-all duration-500">
+                                            <Check size={16} strokeWidth={3} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <EditableText id={id} propKey={`items.${i}.title`} value={item.title} as="h4" className="text-2xl font-bold text-white tracking-tight" isExport={isExport} />
+                                            <EditableText id={id} propKey={`items.${i}.content`} value={item.content} as="p" className="text-slate-400 text-lg leading-relaxed" isExport={isExport} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full lg:max-w-xl">
+                            {items?.map((item, i) => (
+                                <div key={i} className={cn(
+                                    "p-10 rounded-[40px] border transition-all duration-500 group relative overflow-hidden",
+                                    item.highlight
+                                        ? "bg-gradient-to-br from-pink-600 to-pink-700 border-pink-500 shadow-2xl shadow-pink-600/20 lg:-mt-12 lg:mb-12"
+                                        : "bg-slate-950 border-white/5 hover:border-pink-500/30 shadow-xl"
+                                )}>
+                                    <div className={cn(
+                                        "size-16 rounded-2xl flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:rotate-3",
+                                        item.highlight ? "bg-white/20 text-white" : "bg-pink-600/10 text-pink-500"
+                                    )}>
+                                        <EditableImage
+                                            id={id}
+                                            propKey={`items.${i}.icon`}
+                                            src={item.icon || ''}
+                                            className="size-8"
+                                            aspectRatio="aspect-square"
+                                            isExport={isExport}
+                                        />
+                                    </div>
+                                    <EditableText id={id} propKey={`items.${i}.title`} value={item.title} as="h4" className={cn("text-2xl font-bold tracking-tight mb-4", item.highlight ? "text-white" : "text-white")} isExport={isExport} />
+                                    <EditableText id={id} propKey={`items.${i}.content`} value={item.content} as="p" className={cn("text-lg leading-relaxed", item.highlight ? "text-pink-100" : "text-slate-400")} isExport={isExport} />
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    <div className="p-10 rounded-[32px] space-y-6 border border-slate-800 bg-slate-950 max-w-[400px] w-full hover:border-pink-500/50 transition-all duration-300 hover:scale-105 shadow-2xl">
-                        <img alt="Highly customizable" src="pixels/shape-icon.svg" className="w-16 h-16" />
-                        <h3 className="text-2xl font-bold text-white leading-tight">Highly customizable</h3>
-                        <p className="text-slate-400 text-lg leading-relaxed pb-4">Tailwind utility-first classes make customization trivial.</p>
-                    </div>
-                </div>
 
-                <div className="mt-56 relative mx-auto max-w-[90%]">
-                    <div className="absolute -z-50 size-128 -top-20 -left-32 aspect-square rounded-full bg-pink-500/30 blur-3xl opacity-50"></div>
-                    <p className="text-slate-300 text-2xl md:text-3xl font-medium text-left max-w-4xl leading-relaxed">PrebuiltUI helps you build faster by transforming your design vision into fully functional, production-ready UI components.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 mt-16 gap-12">
-                        <div className="md:col-span-2 relative group overflow-hidden rounded-[40px] border border-white/5 shadow-2xl">
-                            <img alt="features showcase" src="pixels/features-showcase-1.png" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                        </div>
-                        <div className="md:col-span-1 flex flex-col justify-center">
-                            <img alt="features showcase" className="hover:-translate-y-1 transition duration-500 rounded-2xl border border-white/5 mb-8 shadow-xl" src="pixels/features-showcase-2.png" />
-                            <h3 className="text-3xl md:text-4xl text-white font-bold leading-tight mt-6">Better design with highest revenue and profits </h3>
-                            <p className="text-slate-400 text-lg mt-4 leading-relaxed">PrebuiltUI empowers you to build beautifully and scale effortlessly.</p>
-                            <a href="#" className="group flex items-center gap-3 mt-8 text-pink-600 hover:text-pink-700 transition font-bold text-xl">
-                                Learn more about the product
-                                <ArrowUpRight className="size-6 group-hover:translate-x-1 transition duration-300" />
-                            </a>
+                    <div className="mt-40 p-12 md:p-24 rounded-[64px] bg-slate-900/50 border border-white/5 relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-pink-600/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                        <div className="relative z-10 max-w-3xl">
+                            <EditableText id={id} propKey="showcaseTitle" value={showcaseTitle || ''} as="h3" className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-8" isExport={isExport} />
+                            <EditableText id={id} propKey="showcaseDescription" value={showcaseDescription || ''} as="p" className="text-xl md:text-2xl text-slate-400 leading-relaxed mb-12" isExport={isExport} />
+                            <button className="flex items-center gap-3 text-pink-500 font-bold group/btn text-xl">
+                                <EditableText id={id} propKey="linkText" value={linkText} as="span" isExport={isExport} />
+                                <ArrowUpRight className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                            </button>
                         </div>
                     </div>
                 </div>
             </section>
-        );
+        )
     }
 
     return (
         <section className={cn(
             "py-24 px-6 md:px-12 transition-all",
-            styles?.glassmorphism
-                ? "bg-primary/5 backdrop-blur-md border-y border-white/5"
-                : "bg-muted/20"
+            styles?.glassmorphism ? "bg-background/40 backdrop-blur-xl" : "bg-background"
         )}>
-            <div className={cn("max-w-3xl mx-auto mb-20", styles?.textAlign === 'center' ? 'text-center' : '')}>
-                <div className="inline-block px-3 py-1 rounded-lg bg-foreground/5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">Features</div>
-                <EditableText id={id} propKey="title" value={title} as="h2" className="text-4xl md:text-6xl font-black tracking-tighter mb-6 leading-tight" isExport={isExport} />
-            </div>
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {items?.map((item: any, i: number) => (
-                    <div key={i} className={cn(
-                        "p-10 rounded-3xl border shadow-sm hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300 group",
-                        styles?.glassmorphism
-                            ? "bg-white/10 backdrop-blur-sm border-white/10"
-                            : "bg-background border-border/50"
-                    )}>
-                        <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 transform group-hover:rotate-6">
-                            <Check size={24} strokeWidth={2.5} />
+            <div className="max-w-6xl mx-auto space-y-16">
+                <div className="text-center space-y-4 max-w-3xl mx-auto">
+                    <EditableText id={id} propKey="badgeText" value={badgeText} as="span" className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20" isExport={isExport} />
+                    <EditableText id={id} propKey="title" value={title} as="h2" className="text-4xl md:text-6xl font-black tracking-tighter text-foreground" isExport={isExport} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    {items?.map((item, i) => (
+                        <div key={i} className="group space-y-4">
+                            <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3">
+                                <EditableImage
+                                    id={id}
+                                    propKey={`items.${i}.icon`}
+                                    src={item.icon || ''}
+                                    className="size-6"
+                                    aspectRatio="aspect-square"
+                                    isExport={isExport}
+                                />
+                            </div>
+                            <EditableText id={id} propKey={`items.${i}.title`} value={item.title} as="h3" className="text-xl font-bold tracking-tight text-foreground" isExport={isExport} />
+                            <EditableText id={id} propKey={`items.${i}.content`} value={item.content} as="p" className="text-muted-foreground leading-relaxed font-medium" isExport={isExport} />
                         </div>
-                        <EditableText id={id} propKey={`items.${i}.title`} value={item.title} as="h3" className="text-xl font-bold mb-4 tracking-tight" isExport={isExport} />
-                        <EditableText id={id} propKey={`items.${i}.content`} value={item.content} as="p" className="text-muted-foreground leading-relaxed text-sm font-medium" isExport={isExport} />
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         </section>
-    )
+    );
 };

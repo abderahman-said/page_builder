@@ -6,10 +6,19 @@ import type { BaseComponentProps, FAQItem } from './shared-types';
 
 interface FAQProps extends BaseComponentProps {
     title: string;
+    badgeText?: string;
     items: FAQItem[];
 }
 
-export const FAQ: React.FC<FAQProps> = ({ id, title, items, styles, variant, isExport }) => {
+export const FAQ: React.FC<FAQProps> = ({
+    id,
+    title,
+    badgeText = 'Help Center',
+    items,
+    styles,
+    variant,
+    isExport
+}) => {
     const [openIndex, setOpenIndex] = React.useState<number | null>(0);
 
     return (
@@ -21,11 +30,18 @@ export const FAQ: React.FC<FAQProps> = ({ id, title, items, styles, variant, isE
 
             <div className={cn("mx-auto relative z-10", variant === 'pixels' ? "max-w-5xl" : "max-w-4xl")}>
                 <div className="text-center mb-24 space-y-6">
-                    <div className={cn(
-                        "inline-flex items-center gap-2 px-6 py-2 rounded-full border text-xs font-bold uppercase tracking-[0.2em]",
-                        variant === 'pixels' ? "bg-pink-950/70 border-pink-800 text-pink-500" : "bg-primary/10 border-primary/20 text-primary"
-                    )}>
-                        Help Center
+                    <div className="flex justify-center">
+                        <EditableText
+                            id={id}
+                            propKey="badgeText"
+                            value={badgeText}
+                            as="div"
+                            className={cn(
+                                "inline-flex items-center gap-2 px-6 py-2 rounded-full border text-xs font-bold uppercase tracking-[0.2em]",
+                                variant === 'pixels' ? "bg-pink-950/70 border-pink-800 text-pink-500" : "bg-primary/10 border-primary/20 text-primary"
+                            )}
+                            isExport={isExport}
+                        />
                     </div>
                     <EditableText id={id} propKey="title" value={title} as="h2" className={cn(
                         "font-black tracking-tighter leading-none text-white",

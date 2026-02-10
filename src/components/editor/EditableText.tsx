@@ -7,7 +7,7 @@ interface EditableTextProps {
     propKey: string;
     value: string;
     className?: string;
-    as?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'button' | 'div' | 'a';
+    as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'button' | 'div' | 'a';
     multiline?: boolean;
     isExport?: boolean;
     [key: string]: any;
@@ -23,7 +23,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
     isExport = false,
     ...props
 }) => {
-    const { updateComponent } = useStore();
+    const { updateComponent, setFocusedProp } = useStore();
     const [localValue, setLocalValue] = useState(value);
     const [isEditing, setIsEditing] = useState(false);
     const contentRef = useRef<HTMLElement>(null);
@@ -70,6 +70,8 @@ export const EditableText: React.FC<EditableTextProps> = ({
             onFocus={() => setIsEditing(true)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
+            onMouseEnter={() => !isExport && setFocusedProp(propKey)}
+            onMouseLeave={() => !isExport && setFocusedProp(null)}
             onClick={(e) => e.stopPropagation()}
             {...props}
             className={cn(

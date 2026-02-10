@@ -2,16 +2,33 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { ChevronRight, Video, ChevronDown, User } from 'lucide-react';
 import { EditableText } from '../editor/EditableText';
+import { EditableImage } from '../editor/EditableImage';
 import type { BaseComponentProps } from './shared-types';
 
 interface HeroProps extends BaseComponentProps {
     title: string;
     subtitle: string;
     buttonText: string;
+    secondaryButtonText?: string;
+    badgeText?: string;
+    badgeLabel?: string;
     image?: string;
+    centered?: boolean;
 }
 
-export const Hero: React.FC<HeroProps> = ({ id, title, subtitle, buttonText, image, variant, styles, isExport }) => {
+export const Hero: React.FC<HeroProps> = ({
+    id,
+    title,
+    subtitle,
+    buttonText,
+    secondaryButtonText = 'Watch Demo',
+    badgeText = 'New features available',
+    badgeLabel = 'New',
+    image,
+    variant,
+    styles,
+    isExport
+}) => {
     if (variant === 'pixels') {
         return (
             <section className="relative pt-40 pb-32 px-6 md:px-10 overflow-hidden">
@@ -23,7 +40,7 @@ export const Hero: React.FC<HeroProps> = ({ id, title, subtitle, buttonText, ima
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500"></span>
                         </span>
-                        New features available
+                        <EditableText id={id} propKey="badgeText" value={badgeText} as="span" isExport={isExport} />
                         <ChevronRight className="size-4" />
                     </div>
 
@@ -34,17 +51,20 @@ export const Hero: React.FC<HeroProps> = ({ id, title, subtitle, buttonText, ima
                         <EditableText id={id} propKey="buttonText" value={buttonText} as="button" className="px-10 py-5 rounded-full bg-pink-600 hover:bg-pink-700 text-white text-lg font-bold transition-all shadow-xl shadow-pink-600/25 flex items-center gap-3 group hover:scale-105 active:scale-95" isExport={isExport} />
                         <button className="px-10 py-5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-lg font-bold transition-all flex items-center gap-3 hover:scale-105 active:scale-95">
                             <Video className="size-6 text-slate-400" />
-                            Watch Demo
+                            <EditableText id={id} propKey="secondaryButtonText" value={secondaryButtonText} as="span" isExport={isExport} />
                         </button>
                     </div>
                 </div>
 
                 <div className="mt-20 relative max-w-[90%] mx-auto rounded-[32px] border border-white/10 bg-slate-950/50 backdrop-blur-sm p-6 overflow-hidden shadow-2xl">
                     <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent"></div>
-                    <img
+                    <EditableImage
+                        id={id}
+                        propKey="image"
                         src={image || "pixels/hero-section-showcase.png"}
                         alt="Dashboard Preview"
-                        className="w-full rounded-2xl shadow-2xl bg-slate-900 aspect-video object-cover"
+                        className="w-full rounded-2xl shadow-2xl bg-slate-900"
+                        isExport={isExport}
                     />
                 </div>
             </section>
@@ -61,13 +81,13 @@ export const Hero: React.FC<HeroProps> = ({ id, title, subtitle, buttonText, ima
             )}>
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1000px] h-[500px] bg-primary/20 blur-[120px] -z-10 rounded-full mix-blend-screen pointer-events-none" />
                 <div className="max-w-4xl mx-auto space-y-8">
-                    <a href="#" className="inline-flex items-center gap-2 px-1 py-1 pr-3 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary hover:bg-primary/20 transition-all mb-8 mx-auto w-max group">
-                        <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">New</span>
+                    <div className="inline-flex items-center gap-2 px-1 py-1 pr-3 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary hover:bg-primary/20 transition-all mb-8 mx-auto w-max group">
+                        <EditableText id={id} propKey="badgeLabel" value={badgeLabel} as="span" className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider" isExport={isExport} />
                         <span className="flex items-center gap-1 group-hover:gap-2 transition-all">
-                            Try 30 days free trial
+                            <EditableText id={id} propKey="badgeText" value={badgeText} as="span" isExport={isExport} />
                             <ChevronDown className="-rotate-90" size={12} />
                         </span>
-                    </a>
+                    </div>
                     <EditableText
                         id={id}
                         propKey="title"
@@ -92,7 +112,7 @@ export const Hero: React.FC<HeroProps> = ({ id, title, subtitle, buttonText, ima
                             <div className="p-1 rounded bg-muted group-hover:bg-foreground group-hover:text-background transition-colors">
                                 <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[6px] border-l-current border-b-[3px] border-b-transparent ml-0.5" />
                             </div>
-                            Watch Demo
+                            <EditableText id={id} propKey="secondaryButtonText" value={secondaryButtonText} as="span" isExport={isExport} />
                         </button>
                     </div>
                 </div>
@@ -142,9 +162,16 @@ export const Hero: React.FC<HeroProps> = ({ id, title, subtitle, buttonText, ima
                 </div>
             </div>
             {image && (
-                <div className="flex-1 w-full max-w-xl aspect-[4/3] relative rounded-3xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] group">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                    <img src={image} alt="Hero" className="object-cover w-full h-full scale-105 group-hover:scale-100 transition-transform duration-1000" />
+                <div className="flex-1 w-full max-w-xl relative group">
+                    <EditableImage
+                        id={id}
+                        propKey="image"
+                        src={image}
+                        alt="Hero"
+                        className="rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]"
+                        aspectRatio="aspect-[4/3]"
+                        isExport={isExport}
+                    />
                 </div>
             )}
         </section>

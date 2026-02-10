@@ -75,6 +75,7 @@ export interface EditorState {
             type: 'image' | 'icon';
         };
     };
+    focusedPropKey: string | null;
 }
 
 // Helper to check if layout is valid

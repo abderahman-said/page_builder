@@ -148,19 +148,95 @@ export const SidebarRight: React.FC = () => {
 
                                 <div className="grid gap-5">
                                     {Object.entries(selectedComponent.props).map(([key, value]) => {
-                                        if (key === 'items' || key === 'centered' || key === 'popular' || key === 'links') return null;
+                                        if (key === 'centered' || key === 'popular') return null;
+
+                                        // Special rendering for arrays (items, links)
+                                        if (Array.isArray(value)) {
+                                            return (
+                                                <div key={key} className="space-y-4 border-t pt-4 mt-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="text-[10px] font-bold uppercase tracking-wider text-primary leading-none">{key}</label>
+                                                        <span className="text-[9px] text-muted-foreground/60 font-mono">ARRAY</span>
+                                                    </div>
+                                                    <div className="space-y-4 pl-2 border-l-2 border-primary/10">
+                                                        {value.map((item: any, index: number) => {
+                                                            const isItemFocused = editor.focusedPropKey?.startsWith(`${key}.${index}.`);
+
+                                                            return (
+                                                                <div key={index} className={cn(
+                                                                    "space-y-3 p-3 rounded-xl border transition-all",
+                                                                    isItemFocused ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20" : "bg-muted/10 border-border/40"
+                                                                )}>
+                                                                    <div className="text-[9px] font-bold text-muted-foreground uppercase">Item #{index + 1}</div>
+                                                                    {Object.entries(item).map(([subKey, subValue]) => {
+                                                                        if (Array.isArray(subValue)) return null; // Don't handle triple nested arrays for now
+
+                                                                        const path = `${key}.${index}.${subKey}`;
+                                                                        const isSubKeyFocused = editor.focusedPropKey === path;
+
+                                                                        return (
+                                                                            <div key={subKey} className={cn(
+                                                                                "space-y-1.5 transition-all p-1 -m-1 rounded-lg",
+                                                                                isSubKeyFocused && "bg-primary/10 ring-1 ring-primary/20"
+                                                                            )}>
+                                                                                <label className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground/70">{subKey}</label>
+                                                                                {typeof subValue === 'string' && (subKey === 'content' || subKey === 'answer' || subKey === 'quote') ? (
+                                                                                    <textarea
+                                                                                        value={subValue}
+                                                                                        onChange={(e) => updateComponent(selectedComponent.id, {
+                                                                                            props: { [path]: e.target.value }
+                                                                                        })}
+                                                                                        className="w-full text-[11px] p-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/10 border-border/50 outline-none min-h-[60px] resize-none transition-all font-medium"
+                                                                                    />
+                                                                                ) : typeof subValue === 'boolean' ? (
+                                                                                    <button
+                                                                                        onClick={() => updateComponent(selectedComponent.id, {
+                                                                                            props: { [path]: !subValue }
+                                                                                        })}
+                                                                                        className={cn(
+                                                                                            "w-full py-1.5 rounded-lg text-[10px] font-bold border transition-all",
+                                                                                            subValue ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+                                                                                        )}
+                                                                                    >
+                                                                                        {subValue ? 'Enabled' : 'Disabled'}
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={subValue as string}
+                                                                                        onChange={(e) => updateComponent(selectedComponent.id, {
+                                                                                            props: { [path]: e.target.value }
+                                                                                        })}
+                                                                                        className="w-full text-[11px] px-2 py-1.5 rounded-lg border bg-background focus:ring-2 focus:ring-primary/10 border-border/50 outline-none transition-all font-bold"
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        const isFocused = editor.focusedPropKey === key;
 
                                         return (
-                                            <div key={key} className="space-y-2">
+                                            <div key={key} className={cn(
+                                                "space-y-2 transition-all p-2 -m-2 rounded-xl",
+                                                isFocused && "bg-primary/10 ring-1 ring-primary/20"
+                                            )}>
                                                 <div className="flex items-center justify-between">
                                                     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none">{key.replace(/([A-Z])/g, ' $1')}</label>
                                                     <span className="text-[9px] text-muted-foreground/60 font-mono">TEXT</span>
                                                 </div>
                                                 {key === 'content' || key === 'subtitle' ? (
                                                     <textarea
-                                                        value={value}
+                                                        value={value as string}
                                                         onChange={(e) => updateComponent(selectedComponent.id, {
-                                                            props: { ...selectedComponent.props, [key]: e.target.value }
+                                                            props: { [key]: e.target.value }
                                                         })}
                                                         className="w-full text-xs p-3 rounded-xl border bg-muted/20 focus:bg-background focus:ring-2 focus:ring-foreground/5 border-transparent focus:border-border outline-none min-h-[100px] resize-none transition-all shadow-inner font-medium leading-relaxed"
                                                     />
@@ -171,7 +247,7 @@ export const SidebarRight: React.FC = () => {
                                                     >
                                                         {value ? (
                                                             <>
-                                                                <img src={value} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                                                <img src={value as string} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                                     <span className="text-[10px] font-bold text-white uppercase tracking-widest">Change Asset</span>
                                                                 </div>
@@ -186,9 +262,9 @@ export const SidebarRight: React.FC = () => {
                                                 ) : (
                                                     <input
                                                         type="text"
-                                                        value={value}
+                                                        value={value as string}
                                                         onChange={(e) => updateComponent(selectedComponent.id, {
-                                                            props: { ...selectedComponent.props, [key]: e.target.value }
+                                                            props: { [key]: e.target.value }
                                                         })}
                                                         className="w-full text-xs px-3 py-2.5 rounded-xl border bg-muted/20 focus:bg-background focus:ring-2 focus:ring-foreground/5 border-transparent focus:border-border outline-none transition-all shadow-inner font-bold"
                                                     />

@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
+// Shared Component Types
 
 export interface BaseComponentProps {
     id: string;
@@ -15,7 +15,8 @@ export interface Link {
 export interface FeatureItem {
     title: string;
     content: string;
-    icon?: LucideIcon;
+    icon: string;
+    highlight?: boolean;
 }
 
 export interface PricingItem {
@@ -24,6 +25,7 @@ export interface PricingItem {
     features: string[];
     buttonText: string;
     popular?: boolean;
+    popularLabel?: string;
 }
 
 export interface TestimonialItem {

@@ -30,6 +30,7 @@ interface StoreState {
     openAssetsManager: (target: EditorState['assetsManager']['target']) => void;
     closeAssetsManager: () => void;
     selectAsset: (url: string) => void;
+    setFocusedProp: (propKey: string | null) => void;
 
     // History
     undo: () => void;
@@ -105,7 +106,8 @@ export const useStore = create<StoreState>((set, get) => ({
         isDragging: false,
         canUndo: false,
         canRedo: false,
-        assetsManager: { isOpen: false }
+        assetsManager: { isOpen: false },
+        focusedPropKey: null
     },
     history: [INITIAL_LAYOUT],
     historyIndex: 0,
@@ -151,11 +153,36 @@ export const useStore = create<StoreState>((set, get) => ({
         set((state: StoreState) => {
             const newComponents = state.layout.components.map((comp: LayoutComponent) => {
                 if (comp.id === id) {
-                    const newComp = { ...comp, ...updates };
+                    // Deep clone the component to avoid direct mutation
+                    const newComp = JSON.parse(JSON.stringify(comp));
+
+                    // Handle props update separately to merge them
+                    if (updates.props) {
+                        Object.entries(updates.props).forEach(([key, value]) => {
+                            // If the key contains a dot, it's a nested path (e.g., 'items.0.name')
+                            if (key.includes('.')) {
+                                const path = key.split('.');
+                                let current = newComp.props;
+                                for (let i = 0; i < path.length - 1; i++) {
+                                    if (!current[path[i]]) current[path[i]] = {};
+                                    current = current[path[i]];
+                                }
+                                current[path[path.length - 1]] = value;
+                            } else {
+                                newComp.props[key] = value;
+                            }
+                        });
+                    }
+
+                    // Merge other updates (variant, styles, etc.)
+                    const { props: _props, ...otherUpdates } = updates;
+                    Object.assign(newComp, otherUpdates);
+
                     // If variant changed, reset props to default for that variant
                     if (updates.variant && updates.variant !== comp.variant) {
                         newComp.props = getDefaultProps(comp.type, updates.variant);
                     }
+
                     return newComp;
                 }
                 return comp;
@@ -320,6 +347,12 @@ export const useStore = create<StoreState>((set, get) => ({
             }
         }
         get().closeAssetsManager();
+    },
+
+    setFocusedProp: (propKey) => {
+        set((state) => ({
+            editor: { ...state.editor, focusedPropKey: propKey }
+        }));
     },
 
     setThemeColor: (color) => {
@@ -519,13 +552,27 @@ function getDefaultProps(type: ComponentType, variant: string = 'v1') {
                     { label: 'About', href: '#' },
                 ],
                 cta: 'Sign Up',
+                secondaryCta: 'Sign in',
             };
         case 'hero':
+            if (variant === 'pixels') {
+                return {
+                    title: 'Craft Your Perfect Landing Page',
+                    subtitle: 'Build high-converting pages in minutes with our intuitive drag-and-drop builder.',
+                    buttonText: 'Get Started',
+                    secondaryButtonText: 'Watch Demo',
+                    badgeText: 'New features available',
+                    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+                };
+            }
             if (variant === 'v2') {
                 return {
                     title: 'Centered Growth Strategy',
                     subtitle: 'Focus on what matters most. Our platform scales with your ambition.',
                     buttonText: 'Start Free Trial',
+                    secondaryButtonText: 'Watch Demo',
+                    badgeText: 'Try 30 days free trial',
+                    badgeLabel: 'New',
                     centered: true,
                 };
             }
@@ -536,8 +583,25 @@ function getDefaultProps(type: ComponentType, variant: string = 'v1') {
                 image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
             };
         case 'features':
+            if (variant === 'pixels') {
+                return {
+                    title: 'Everything you need to scale',
+                    badgeText: 'Features',
+                    subtitle: 'Components, patterns and pages — everything you need to ship.',
+                    description: 'PrebuiltUI helps you build faster by transforming your design vision into fully functional, production-ready UI components.',
+                    showcaseTitle: 'Better design with highest revenue and profits',
+                    showcaseDescription: 'PrebuiltUI empowers you to build beautifully and scale effortlessly.',
+                    linkText: 'Learn more about the product',
+                    items: [
+                        { title: 'Lightning-fast setup', content: 'Launch production-ready pages in minutes with prebuilt components.', icon: 'pixels/zap-icon.svg' },
+                        { title: 'Pixel perfect', content: 'Modern Figma-driven UI that translates to exact code.', icon: 'pixels/thumb-icon.svg', highlight: true },
+                        { title: 'Highly customizable', content: 'Tailwind utility-first classes make customization trivial.', icon: 'pixels/shape-icon.svg' },
+                    ],
+                };
+            }
             return {
                 title: 'Everything you need to scale',
+                badgeText: 'Features',
                 items: [
                     { title: 'Lightning Fast', content: 'Optimized performance for maximum conversion rates.', icon: 'Zap' },
                     { title: 'Secure by Design', content: 'Enterprise-grade security built into every block.', icon: 'Shield' },
@@ -545,8 +609,21 @@ function getDefaultProps(type: ComponentType, variant: string = 'v1') {
                 ],
             };
         case 'pricing':
+            if (variant === 'pixels') {
+                return {
+                    title: 'Flexible plans for teams of all sizes',
+                    badgeText: 'Pricing',
+                    subtitle: 'Flexible pricing options designed to meet your needs — whether you\'re just getting started or scaling up.',
+                    items: [
+                        { name: 'Basic', price: '$29', features: ['Access to all basic courses', 'Community support', '10 practice projects'], buttonText: 'Get Started' },
+                        { name: 'Pro', price: '$79', features: ['Access to all Pro courses', 'Priority community support', '30 practice projects'], buttonText: 'Get Started', popular: true, popularLabel: 'Most Popular' },
+                        { name: 'Enterprise', price: '$199', features: ['Access to all courses', 'Dedicated support', 'Unlimited projects'], buttonText: 'Get Started' },
+                    ],
+                };
+            }
             return {
                 title: 'Flexible plans for teams of all sizes',
+                badgeText: 'Pricing',
                 items: [
                     { name: 'Starter', price: '$0', features: ['3 Projects', 'Basic Analytics', 'Community Support'], buttonText: 'Get Started' },
                     { name: 'Professional', price: '$49', features: ['Unlimited Projects', 'Advanced Analytics', 'Priority Support', 'Custom Domains'], buttonText: 'Upgrade Now', popular: true },
@@ -555,18 +632,31 @@ function getDefaultProps(type: ComponentType, variant: string = 'v1') {
         case 'testimonials':
             return {
                 title: 'Trusted by world-class teams',
+                badgeText: 'Testimonials',
                 items: [
-                    { name: 'Alex Rivera', role: 'Founder @ TechFlow', quote: 'The best builder we have ever used. Period.', avatar: 'https://i.pravatar.cc/150?u=alex' },
-                    { name: 'Sarah Chen', role: 'Marketing Lead', quote: 'Our conversion rate jumped 40% in two weeks.', avatar: 'https://i.pravatar.cc/150?u=sarah' },
+                    { name: 'Alex Johnson', role: 'CEO at Techflow', quote: 'PrebuiltUI has completely transformed our workflow.', avatar: '' },
+                    { name: 'Sarah Chen', role: 'Product Designer', quote: 'The best UI library I\'ve ever used.', avatar: '' },
                 ],
             };
         case 'faq':
+            if (variant === 'pixels') {
+                return {
+                    title: 'Frequently Asked Questions',
+                    badgeText: 'Help Center',
+                    items: [
+                        { question: 'What is PrebuiltUI?', answer: 'PrebuiltUI is a collection of high-quality, pre-designed components and templates that help you build stunning websites faster. Our components are built with React and Tailwind CSS, ensuring they are easy to use and highly customizable.' },
+                        { question: 'How do I get started?', answer: 'Getting started is easy! Simply choose a template or browse our component library, copy the code, and paste it into your project. You can also use our page builder to visually design your site.' },
+                        { question: 'Is it free to use?', answer: 'We offer both free and premium components. You can use our free components in any project, while our premium components require a subscription or a one-time purchase.' },
+                        { question: 'Do you offer support?', answer: 'Absolutely! Our team is dedicated to helping you succeed. If you have any questions or run into any issues, you can reach out to us through our support center or community forum.' },
+                    ],
+                };
+            }
             return {
                 title: 'Frequently Asked Questions',
+                badgeText: 'FAQ',
                 items: [
-                    { question: 'Is there a free trial?', answer: 'Yes! You can start with our free plan and upgrade anytime.' },
-                    { question: 'Can I export my code?', answer: 'Absolutely. We provide clean, production-ready React and Tailwind code.' },
-                    { question: 'Do you offer custom domains?', answer: 'Yes, custom domain mapping is available on our Professional plan.' },
+                    { question: 'What is PrebuiltUI?', answer: 'PrebuiltUI is a library of premium components.' },
+                    { question: 'How do I get started?', answer: 'Simply copy and paste our components.' },
                 ],
             };
         case 'cta':
@@ -575,14 +665,30 @@ function getDefaultProps(type: ComponentType, variant: string = 'v1') {
                 subtitle: 'Join over 10,000 creators and start building today.',
                 buttonText: 'Get Started for Free',
             };
+        case 'contact':
+            return {
+                title: 'Reach out to us',
+                subtitle: 'Ready to grow your brand? Let’s connect and build something exceptional together.',
+                badgeText: 'Contact',
+                buttonText: 'Submit',
+                nameLabel: 'Your name',
+                emailLabel: 'Email id',
+                messageLabel: 'Message',
+                namePlaceholder: 'Enter your name',
+                emailPlaceholder: 'Enter your email',
+                messagePlaceholder: 'Enter your message',
+            };
         case 'footer':
             return {
                 content: '© 2024 Builder Inc. Built with love for creators.',
                 footerLogoImage: '',
-                links: [
-                    { label: 'Privacy', href: '#' },
-                    { label: 'Terms', href: '#' },
-                    { label: 'Cloud', href: '#' },
+                badgeText: 'Pixels.',
+                credits: '© 2025 PrebuiltUI.',
+                description: 'Making every customer feel valued—no matter the size of your audience.',
+                columns: [
+                    { title: 'Product', links: ['Home', 'Support', 'Pricing', 'Affiliate'] },
+                    { title: 'Resources', links: ['Company', 'Blogs', 'Community', 'Careers', 'About'] },
+                    { title: 'Legal', links: ['Privacy', 'Terms'] },
                 ],
                 socials: [
                     { platform: 'twitter', url: 'https://twitter.com' },
